@@ -1,7 +1,6 @@
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderErrorPage } from "./lib/error-page";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -18,8 +17,31 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
+// Mengubah response error menjadi HTML standar tanpa menggunakan renderErrorPage bawaan Lovable
 function brandedErrorResponse(): Response {
-  return new Response(renderErrorPage(), {
+  const fallbackHtml = `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="utf-8">
+      <title>Internal Server Error</title>
+      <style>
+        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f4f4f5; color: #27272a; }
+        .container { text-align: center; padding: 2rem; }
+        h1 { margin: 0; font-size: 2rem; }
+        p { color: #71717a; margin-top: 0.5rem; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>500 — Internal Server Error</h1>
+        <p>Terjadi kesalahan pada server. Silakan coba beberapa saat lagi.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return new Response(fallbackHtml, {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
